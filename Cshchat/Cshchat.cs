@@ -1,23 +1,70 @@
 ﻿using System;
+using System.Timers;
 using System.Text;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace KYapp.Cshchat
 {
     public class YoutubeLive
     {
-        public Data YoutubeChatData;
-        HttpClient client = new HttpClient();
+        private Data YoutubeChatData;
+        private HttpClient client = new HttpClient();
 
-        public YoutubeLive()
+        private Timer timer;
+
+        public YoutubeLive(string v)
         {
 
+
+            timer = new Timer(1000);
+            timer.Elapsed += (sender, e) =>
+            {
+                //初回時にデータを取得する
+                if (YoutubeChatData == null)
+                {
+                    Task<Data> task = FetchFirstLive(v);
+                    task.Wait();
+                    YoutubeChatData = task.Result;
+                }
+
+                Task<HttpResponseMessage> chat = FetchChat();
+                chat.Wait();
+                Task<string> res = chat.Result.Content.ReadAsStringAsync();
+                res.Wait();
+
+                //パース
+                ChatParse(res.Result);
+
+
+                Console.WriteLine(res.Result);
+                timer.Stop();
+            };
         }
 
-        public async Task<string> FetchChat()
+        public string ChatParse(string res)
+        {
+            JObject json = JObject.Parse(res);
+
+            Console.WriteLine(json.GetValue("a"));
+
+            return "";
+        }
+
+        public void Begin()
+        {
+            timer.Start();
+        }
+
+        public void End()
+        {
+            timer.Stop();
+        }
+
+        public async Task<HttpResponseMessage> FetchChat()
         {
             var param = new Dictionary<string, string>()
             {
@@ -30,7 +77,7 @@ namespace KYapp.Cshchat
 
             if (res.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                return await res.Content.ReadAsStringAsync();
+                return res;
             }
             else
             {

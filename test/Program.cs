@@ -1,6 +1,7 @@
 ﻿using System;
 using KYapp.Cshchat;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace test
 {
@@ -8,15 +9,13 @@ namespace test
     {
         static void Main(string[] args)
         {
-            YoutubeLive a = new YoutubeLive();
+            YoutubeLive a = new YoutubeLive("5qap5aO4i9A");
 
-            Task<YoutubeLive.Data> task = a.FetchFirstLive("5qap5aO4i9A");
-            task.Wait();
+            a.Begin();
 
-            Task<string> task2 = a.FetchChat();
-            task2.Wait();
-            Console.WriteLine(task2.Result.ToString());
-            
+            Console.ReadKey();
+            a.End();
+            Console.ReadKey();
         }
     }
 }
