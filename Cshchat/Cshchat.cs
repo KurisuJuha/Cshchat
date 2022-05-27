@@ -56,31 +56,22 @@ namespace KYapp.Cshchat
             {
                 foreach (var item in a.AsArray())
                 {
-
                     Comment com = new Comment();
+                    bool ok = false;
 
-                    JsonNode Chat = null;
-                    JsonNode SuperChat = null;
+                    JsonNode Chat = item["addChatItemAction"]?["item"]?["liveChatTextMessageRenderer"];
+                    JsonNode SuperChat = item["addChatItemAction"]?["item"]?["liveChatPaidMessageRenderer"];
 
-                    try
-                    {
-                        Chat = item["addChatItemAction"]["item"]["liveChatTextMessageRenderer"];
-                    }
-                    catch { throw null; }
-                    try
-                    {
-                        SuperChat = item["addChatItemAction"]["item"]["liveChatPaidMessageRenderer"];
-                    }
-                    catch { throw null; }
 
                     if (Chat != null)
                     {
                         //通常コメント
-                        foreach (var item2 in Chat["message"]["runs"].AsArray())
+                        foreach (var item2 in Chat["message"]?["runs"].AsArray())
                         {
                             if (item2["text"] != null)
                             {
                                 com.text = item2["text"].ToString();
+                                ok = true;
                             }
                         }
                     }
@@ -89,9 +80,11 @@ namespace KYapp.Cshchat
                         //スパ茶
                     }
 
-                    Console.WriteLine(com.text) ;
-
-                    comments.Add(com);
+                    if (ok)
+                    {
+                        Console.WriteLine(com.text);
+                        comments.Add(com);
+                    }
                 }
             }
             return comments;
