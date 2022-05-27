@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+using System.Text.Json.Nodes;
 
 namespace KYapp.Cshchat
 {
@@ -39,30 +39,63 @@ namespace KYapp.Cshchat
                 //パース
                 ChatParse(res.Result);
 
+                string ctn = JsonNode.Parse(res.Result)["continuationContents"]["liveChatContinuation"]["continuations"][0]["timedContinuationData"]["continuation"].ToString();
+                YoutubeChatData.Ctn = ctn;
+
+
             };
         }
 
-        public string ChatParse(string res)
+        public List<Comment> ChatParse(string res)
         {
-            var root = ParseJson(res);
-            var continuationContents = ParseJson(root["continuationContents"].ToString());
-            var liveChatContinuation = ParseJson(continuationContents["liveChatContinuation"].ToString());
-            if (liveChatContinuation.TryGetValue("actions", out object actions))
-            {
-                Console.WriteLine(actions.ToString());
-            }
-            else
-            {
-                Console.WriteLine("None");
-            }
-            return "";
-        }
+            List<Comment> comments = new List<Comment>();
 
-        public Dictionary<string, object> ParseJson(string json)
-        {
-            return JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-        }
+            var node = JsonNode.Parse(res);
+            var a = node["continuationContents"]["liveChatContinuation"]["actions"];
+            if (a != null)
+            {
+                foreach (var item in a.AsArray())
+                {
 
+                    Comment com = new Comment();
+
+                    JsonNode Chat = null;
+                    JsonNode SuperChat = null;
+
+                    try
+                    {
+                        Chat = item["addChatItemAction"]["item"]["liveChatTextMessageRenderer"];
+                    }
+                    catch { throw null; }
+                    try
+                    {
+                        SuperChat = item["addChatItemAction"]["item"]["liveChatPaidMessageRenderer"];
+                    }
+                    catch { throw null; }
+
+                    if (Chat != null)
+                    {
+                        //通常コメント
+                        foreach (var item2 in Chat["message"]["runs"].AsArray())
+                        {
+                            if (item2["text"] != null)
+                            {
+                                com.text = item2["text"].ToString();
+                            }
+                        }
+                    }
+                    else if(SuperChat != null)
+                    {
+                        //スパ茶
+                    }
+
+                    Console.WriteLine(com.text) ;
+
+                    comments.Add(com);
+                }
+            }
+            return comments;
+        }
         public void Begin()
         {
             timer.Start();
@@ -176,5 +209,13 @@ namespace KYapp.Cshchat
                 return builder.ToString();
             }
         }
+    }
+
+    public class Comment
+    {
+        public string text;
+        public string name;
+        public string id;
+        public bool isSuperChat;
     }
 }
