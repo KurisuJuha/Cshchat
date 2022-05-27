@@ -11,11 +11,16 @@ namespace test
         {
             YoutubeLive a = new YoutubeLive("5qap5aO4i9A");
 
-            a.Begin();
+            a.Begin(_OnComment);
 
             Console.ReadKey();
             a.End();
             Console.ReadKey();
+        }
+
+        public static void _OnComment(Comment comment)
+        {
+            Console.WriteLine(comment.text);
         }
     }
 }

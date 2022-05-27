@@ -16,10 +16,10 @@ namespace KYapp.Cshchat
 
         private Timer timer;
 
+        private Action<Comment> OnComment;
+
         public YoutubeLive(string v)
         {
-
-
             timer = new Timer(1000);
             timer.Elapsed += (sender, e) =>
             {
@@ -30,19 +30,35 @@ namespace KYapp.Cshchat
                     task.Wait();
                     YoutubeChatData = task.Result;
                 }
+                else
+                {
 
-                Task<HttpResponseMessage> chat = FetchChat();
-                chat.Wait();
-                Task<string> res = chat.Result.Content.ReadAsStringAsync();
-                res.Wait();
+                    Task<HttpResponseMessage> chat = FetchChat();
+                    chat.Wait();
+                    Task<string> res = chat.Result.Content.ReadAsStringAsync();
+                    res.Wait();
 
-                //パース
-                ChatParse(res.Result);
+                    //パース
+                    ChatParse(res.Result);
 
-                string ctn = JsonNode.Parse(res.Result)["continuationContents"]["liveChatContinuation"]["continuations"][0]["timedContinuationData"]["continuation"].ToString();
-                YoutubeChatData.Ctn = ctn;
+                    var _a = JsonNode.Parse(res.Result);
+                    var _b = _a["continuationContents"];
+                    var _c = _b["liveChatContinuation"];
+                    var _d = _c["continuations"];
+                    var _e = _d[0];
+                    var _f = _e["invalidationContinuationData"];
+                    //正直よくわかってないけどこれで動く（ヤバい）
+                    if (_f == null)
+                    {
+                        _f = _e["timedContinuationData"];
+                    }
+                    var _g = _f["continuation"];
 
 
+                    string ctn = _g.ToString();
+                    YoutubeChatData.Ctn = ctn;
+
+                }
             };
         }
 
@@ -78,19 +94,21 @@ namespace KYapp.Cshchat
                     else if(SuperChat != null)
                     {
                         //スパ茶
+                        //Todo: スパ茶を確認できる環境がないため未実装
                     }
 
                     if (ok)
                     {
-                        Console.WriteLine(com.text);
+                        OnComment(com);
                         comments.Add(com);
                     }
                 }
             }
             return comments;
         }
-        public void Begin()
+        public void Begin(Action<Comment> OnComment)
         {
+            this.OnComment = OnComment;
             timer.Start();
         }
 
