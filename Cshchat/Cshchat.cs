@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace KYapp.Cshchat
 {
@@ -39,19 +39,28 @@ namespace KYapp.Cshchat
                 //パース
                 ChatParse(res.Result);
 
-
-                Console.WriteLine(res.Result);
-                timer.Stop();
             };
         }
 
         public string ChatParse(string res)
         {
-            JObject json = JObject.Parse(res);
-
-            Console.WriteLine(json.GetValue("a"));
-
+            var root = ParseJson(res);
+            var continuationContents = ParseJson(root["continuationContents"].ToString());
+            var liveChatContinuation = ParseJson(continuationContents["liveChatContinuation"].ToString());
+            if (liveChatContinuation.TryGetValue("actions", out object actions))
+            {
+                Console.WriteLine(actions.ToString());
+            }
+            else
+            {
+                Console.WriteLine("None");
+            }
             return "";
+        }
+
+        public Dictionary<string, object> ParseJson(string json)
+        {
+            return JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
         }
 
         public void Begin()
