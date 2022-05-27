@@ -10,9 +10,13 @@ namespace test
         {
             YoutubeLive a = new YoutubeLive();
 
-            Task<YoutubeLive.Data> task = a.FetchFirstLive();
+            Task<YoutubeLive.Data> task = a.FetchFirstLive("5qap5aO4i9A");
             task.Wait();
-            Console.WriteLine(task.Result.ToString());
+
+            Task<string> task2 = a.FetchChat();
+            task2.Wait();
+            Console.WriteLine(task2.Result.ToString());
+            
         }
     }
 }

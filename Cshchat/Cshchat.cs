@@ -10,22 +10,74 @@ namespace KYapp.Cshchat
     public class YoutubeLive
     {
         public Data YoutubeChatData;
+        HttpClient client = new HttpClient();
 
         public YoutubeLive()
         {
 
         }
 
-        public async Task<Data> FetchFirstLive()
+        public async Task<string> FetchChat()
         {
-            var client = new HttpClient();
+            var param = new Dictionary<string, string>()
+            {
+                {"key",YoutubeChatData.Key}
+            };
+            var res = await client.PostAsync(
+                "https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?" + "key=" + param["key"],
+                new StringContent(DataBuild())
+            );
+
+            if (res.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return await res.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public string DataBuild()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append("{");
+            builder.Append("\"context\":{");
+            builder.Append("\"client\":{");
+
+            builder.Append("\"visitorData\":");
+            builder.Append("\"");
+            builder.Append(YoutubeChatData.VisitorData);
+            builder.Append("\",");
+            builder.Append("\"User-Agent\":\"Mozilla / 5.0(Windows NT 6.3; Win64; x64) AppleWebKit / 537.36(KHTML, like Gecko) Chrome / 86.0.4240.111 Safari / 537.36\"");
+            builder.Append(",");
+            builder.Append("\"clientName\" : \"WEB\",");
+            builder.Append("\"clientVersion\":");
+            builder.Append("\"");
+            builder.Append(YoutubeChatData.ClientVersion);
+            builder.Append("\"");
+
+            builder.Append("}");
+            builder.Append("},");
+            builder.Append("\"continuation\":");
+            builder.Append("\"");
+            builder.Append(YoutubeChatData.Ctn);
+            builder.Append("\"");
+
+            builder.Append("}");
+            return builder.ToString();
+        }
+
+        public async Task<Data> FetchFirstLive(string v)
+        {
             client.DefaultRequestHeaders.Add(
         "User-Agent",
         "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
 
             var param = new Dictionary<string, string>()
             {
-                ["v"] = "5qap5aO4i9A"
+                ["v"] = v
             };
             var content = await new FormUrlEncodedContent(param).ReadAsStringAsync();
             var result = await client.GetAsync(@"https://www.youtube.com/live_chat?" + content);
